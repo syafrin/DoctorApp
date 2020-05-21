@@ -2,11 +2,25 @@ import React, {useEffect, useState} from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import {Gap, HomeProfile, NewsItem} from '../../components';
 import {Fire} from '../../config';
-import {colors, fonts, showError} from '../../utils';
+import {colors, fonts, showError, getData} from '../../utils';
+import {ILNullPhoto} from '../../assets';
 
 const Doctor = ({navigation}) => {
   const [news, setNews] = useState([]);
+  const [profile, setProfile] = useState({
+    photo: ILNullPhoto,
+    fullName: '',
+    profession: '',
+  });
+
   useEffect(() => {
+    getNews();
+    navigation.addListener('focus', () => {
+      getUserData();
+    });
+  }, [navigation]);
+
+  const getNews = () => {
     Fire.database()
       .ref('news/')
       .once('value')
@@ -18,14 +32,26 @@ const Doctor = ({navigation}) => {
       .catch(err => {
         showError(err.message);
       });
-  }, []);
+  };
+
+  const getUserData = () => {
+    getData('user').then(res => {
+      const data = res;
+      data.photo = res?.photo?.length > 1 ? {uri: res.photo} : ILNullPhoto;
+      setProfile(res);
+    });
+  };
+
   return (
     <View style={styles.page}>
       <View style={styles.content}>
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.wrapperSection}>
             <Gap height={30} />
-            <HomeProfile onPress={() => navigation.navigate('UserProfile')} />
+            <HomeProfile
+              profile={profile}
+              onPress={() => navigation.navigate('UserProfile', profile)}
+            />
           </View>
           <View style={styles.wrapperSection}>
             <Text style={styles.sectionLabel}>Good News</Text>
